@@ -73,10 +73,87 @@ public class Utils {
         printLine(60);
     }
 
-    
     public static void displayMessage(String message) {
-        Utils.printCentered(message);
-        Utils.sleepFor(1500);
-        Utils.clearConsole();
+        printCentered(message);
+        sleepFor(1500);
+        clearConsole();
     }
+
+    public static void role() {
+        printCentered("*- - - - - - - - - -*");
+        printCentered("|     User Roles    |");
+        printCentered("|- - - - - - - - - -|");
+        printCentered("|  1. Admin         |");
+        printCentered("|  2. Employee      |");
+        printCentered("*- - - - - - - - - -*");
+    }
+
+    public static void productCat() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|              Product Categories           |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - -| ");
+        Utils.printCentered("|  1. Groceries           5. Electronics    |");
+        Utils.printCentered("|  2. Home & Kitchen      6. Others         |");
+        Utils.printCentered("|  3. Health & Beauty                       |");
+        Utils.printCentered("|  4. Books & Stationery                    |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+    public static void grocery() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|                    Groceries                    |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - - - - -|");
+        Utils.printCentered("|  1. Fresh Produce   5. Snacks & Confectionery   |");
+        Utils.printCentered("|  2. Dairy Products  6. Beverages                |");
+        Utils.printCentered("|  3. Meat & Seafood  7. Canned & Packaged Foods  |");
+        Utils.printCentered("|  4. Dry Goods       8. Frozen Foods             |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+    public static void hK() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|                 Home & Kitchen                |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - - - -|");
+        Utils.printCentered("|  1. Furniture          5. Cleaning Supplies   |");
+        Utils.printCentered("|  2. Cookware           6. Home Decor          |");
+        Utils.printCentered("|  3. Tableware          7. Lighting            |");
+        Utils.printCentered("|  4. Storage Solutions                         |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+    public static void hB() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|                  Health & Beauty                  |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - - - - - -|");
+        Utils.printCentered("|  1. Skincare           5. Fitness Equipment       |");
+        Utils.printCentered("|  2. Makeup             6. Medical Supplies        |");
+        Utils.printCentered("|  3. Hair Care          7. Supplements & Vitamins  |");
+        Utils.printCentered("|  4. Personal Hygiene                              |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+    public static void bS() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|                      Books & Stationery                       |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|");
+        Utils.printCentered("|  1. Fiction & Non-Fiction Books      4. Writing Instruments   |");
+        Utils.printCentered("|  2. Textbooks & Educational Material 5. Art Supplies          |");
+        Utils.printCentered("|  3. Notebooks & Journals             6. Calendars & Planners  |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+    public static void electonics() {
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - -*");
+        Utils.printCentered("|                    Electronics                    |");
+        Utils.printCentered("|- - - - - - - - - - - - - - - - - - - - - - - - - -|");
+        Utils.printCentered("|  1. Smartphones            5. Smart Home Devices  |");
+        Utils.printCentered("|  2. Laptops and Computers  6. Wearables           |");
+        Utils.printCentered("|  3. Audio Devices          7. Home Appliances     |");
+        Utils.printCentered("|  4. Cameras & Photography                         |");
+        Utils.printCentered("|     Equipment                                     |");
+        Utils.printCentered("*- - - - - - - - - - - - - - - - - - - - - - - - - -*");
+    }
+
+
+
 }

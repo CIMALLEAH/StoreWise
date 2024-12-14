@@ -29,15 +29,17 @@ public class ProductManager {
     // Load products from the database into the list
     private void loadProductsFromDatabase() {
         try (Connection connection = connectToDatabase()) {
-            String query = "SELECT productName, productCategory, stocklevel, expirationdate FROM products";
+            String query = "SELECT productName, productGenCat, productSpecificCat, stockLevel, expirationDate FROM products";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 ResultSet resultSet = statement.executeQuery();
                 while (resultSet.next()) {
                     String name = resultSet.getString("productName");
-                    String category = resultSet.getString("productCategory");
-                    int stockLevel = resultSet.getInt("stocklevel");
-                    Date expirationDate = resultSet.getDate("expirationdate");
-                    products.add(new Product(name, category, stockLevel, expirationDate.toLocalDate()));
+                    String gencat = resultSet.getString("productGenCat");
+                    String spcat = resultSet.getString("productSpecificCat");
+                    int stockLevel = resultSet.getInt("stockLevel");
+                    Date expirationDate = resultSet.getDate("expirationDate");
+                    String expirationDateStr = (expirationDate != null) ? expirationDate.toString() : null;
+                    products.add(new Product(name, gencat, spcat, stockLevel, expirationDateStr));
                 }
             }
         } catch (SQLException e) {
@@ -48,13 +50,18 @@ public class ProductManager {
     // Save products back to the database
     public void saveProductsToDatabase() {
         try (Connection connection = connectToDatabase()) {
-            String query = "REPLACE INTO products (productName, productCategory, stocklevel, expirationdate) VALUES (?, ?, ?, ?)";
+            String query = "REPLACE INTO products (productName, productGenCat, productSpecificCat, stockLevel, expirationDate) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 for (Product product : products) {
                     statement.setString(1, product.getName());
-                    statement.setString(2, product.getCategory());
-                    statement.setInt(3, product.getStockLevel());
-                    statement.setDate(4, Date.valueOf(product.getExpirationDate()));
+                    statement.setString(2, product.getGenCat());
+                    statement.setString(3, product.getSpCat());
+                    statement.setInt(4, product.getStockLevel());                    
+                    if (!product.getExpirationDate().equals("No Expiration")) {
+                        statement.setDate(5, Date.valueOf(product.getExpirationDate()));
+                    } else {
+                        statement.setNull(5, Types.DATE);
+                    }
                     statement.executeUpdate();
                 }
             }
@@ -64,14 +71,19 @@ public class ProductManager {
     }
 
     // Add a new product
-    public void addProduct(Product product) {
+    private void addProduct(Product product) {
         try (Connection connection = connectToDatabase()) {
-            String query = "INSERT INTO products (productName, productCategory, stocklevel, expirationdate) VALUES (?, ?, ?, ?)";
+            String query = "INSERT INTO products (productName, productGenCat, productSpecificCat, stockLevel, expirationDate) VALUES (?, ?, ?, ?, ?)";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
                 statement.setString(1, product.getName());
-                statement.setString(2, product.getCategory());
-                statement.setInt(3, product.getStockLevel());
-                statement.setDate(4, Date.valueOf(product.getExpirationDate()));
+                statement.setString(2, product.getGenCat());
+                statement.setString(3, product.getSpCat());
+                statement.setInt(4, product.getStockLevel());
+                if (product.getExpirationDate() != null) {
+                    statement.setDate(5, Date.valueOf(product.getExpirationDate()));
+                } else {
+                    statement.setNull(5, Types.DATE);
+                }
                 statement.executeUpdate();
             }
         } catch (SQLException e) {
@@ -83,15 +95,29 @@ public class ProductManager {
     }
 
     // Update an existing product
-    public void updateProduct(String name, int newStockLevel, Date newExpirationDate) {
-        Product product = findProductByName(name);
-        if (product != null) {
-            product.setStockLevel(newStockLevel);
-            product.setExpirationDate(newExpirationDate.toLocalDate());
-            saveProductsToDatabase();
-            System.out.println("Product updated: " + name);
-        } else {
-            System.out.println("Product not found.");
+    public void updateProduct(String oldName, String newName, int newStockLevel) {
+        String sql = "UPDATE products SET productName = ?, stockLevel = ? WHERE productName = ?";
+        try (Connection connection = connectToDatabase();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+        
+            statement.setString(1, newName);
+            statement.setInt(2, newStockLevel);
+            statement.setString(3, oldName);
+
+            int rowsUpdated = statement.executeUpdate();
+            if (rowsUpdated > 0) {
+                System.out.println("Product updated in the database: " + oldName);        
+                Product product = findProductByName(oldName);
+                if (product != null) {
+                    product.setName(newName);
+                    product.setStockLevel(newStockLevel);
+                    System.out.println("Product updated in memory: " + oldName);
+                }
+            } else {
+                System.out.println("Product not found in the database.");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -103,7 +129,7 @@ public class ProductManager {
             Product product = iterator.next();
             if (product.getName().equals(name)) {
                 iterator.remove();
-                deleteProductFromDatabase(name);
+                deleteProductById(0);
                 found = true;
                 System.out.println("Product deleted: " + name);
                 break;
@@ -114,23 +140,29 @@ public class ProductManager {
         }
     }
 
-    private void deleteProductFromDatabase(String name) {
+    private void deleteProductById(int productId) {
         try (Connection connection = connectToDatabase()) {
-            String query = "DELETE FROM products WHERE name = ?";
+            String query = "DELETE FROM products WHERE ProductID = ?";
             try (PreparedStatement statement = connection.prepareStatement(query)) {
-                statement.setString(1, name);
-                statement.executeUpdate();
+                statement.setInt(1, productId);
+                int rowsAffected = statement.executeUpdate();
+                if (rowsAffected > 0) {
+                    System.out.println("Product with ID " + productId + " successfully deleted.");
+                } else {
+                    System.out.println("No product found with ID " + productId + ". Nothing was deleted.");
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error deleting product from database: " + e.getMessage());
         }
     }
+    
 
     // Search for products by name or category
     public void searchProducts(String query) {
         List<Product> result = new ArrayList<>();
         for (Product product : products) {
-            if (product.getName().contains(query) || product.getCategory().contains(query)) {
+            if (product.getName().contains(query) || product.getGenCat().contains(query) || product.getSpCat().contains(query)) {
                 result.add(product);
             }
         }
@@ -166,21 +198,41 @@ public class ProductManager {
         return null;
     }
 
-    // List all products
-    public void listProducts() {
-        if (products.isEmpty()) {
-            System.out.println("No products available.");
-        } else {
-            System.out.println("Product List:");
-            for (Product product : products) {
-                System.out.println(product);
+    private void listProductsWID() {
+        String query = "SELECT * FROM products";
+        try (Connection connection = connectToDatabase();
+            PreparedStatement statement = connection.prepareStatement(query);
+            ResultSet resultSet = statement.executeQuery()) {
+
+            if (!resultSet.next()) {
+                System.out.println("No products found.");
+                return;
             }
+
+            System.out.println("Product ID | Product Name | Category | Stock Level | Expiration Date");
+            System.out.println("------------------------------------------------------------");
+
+            do {
+                int productId = resultSet.getInt("ProductID");
+                String productName = resultSet.getString("ProductName");
+                String category = resultSet.getString("Category");
+                int stockLevel = resultSet.getInt("StockLevel");
+                String expirationDate = resultSet.getString("ExpirationDate");
+
+                System.out.printf("%-10d | %-12s | %-10s | %-11d | %-15s\n", productId, productName, category, stockLevel, expirationDate);
+            } while (resultSet.next());
+            Utils.printLine(60);
+            System.in.read();  // Wait for the user to press Enter
+
+        } catch (SQLException | IOException e) {
+            System.err.println("Error fetching product data: " + e.getMessage());
         }
     }
 
     // Menu for managing products
     public void manageProductMenu(Scanner scanner) {
         int choice = 0;
+
         while (true) {
             Utils.displayHeader("Manage Products");
             System.out.println(" Menu:");
@@ -188,19 +240,18 @@ public class ProductManager {
             System.out.println("  2. Update Product");
             System.out.println("  3. Delete Product");
             System.out.println("  4. View Products");
-            System.out.println("  5. Adjust Product Stock");
-            System.out.println("  6. Back to Admin Menu");
+            System.out.println("  5. Back to Admin Menu");
             Utils.printLine(60);
             System.out.print("Please select an option: ");
 
             if (scanner.hasNextInt()) {
                 choice = scanner.nextInt();
                 scanner.nextLine();  // Consume newline
-                if (choice >= 1 && choice <= 6) {
+                if (choice >= 1 && choice <= 5) {
                     break;
                 } else {
                     Utils.displayHeader("Manage Products");
-                    Utils.displayMessage("Invalid input, please enter a number between 1 and 6.");
+                    Utils.displayMessage("Invalid input, please enter a number between 1 and 5.");
                 }
             } else {
                 Utils.displayHeader("Manage Products");
@@ -220,13 +271,10 @@ public class ProductManager {
                 deleteProductMenu(scanner);
                 break;
             case 4:  // View products
-                listProducts();
+                listProductsWID();
                 break;
                 // searchProductMenu(scanner);
-            case 5:  // Adjust stock
-                adjustStockMenu(scanner);
-                break;
-            case 6:  // Back to Admin Menu
+            case 5:  // Back to Admin Menu
                 Utils.clearConsole();
                 return;
             default:
@@ -235,64 +283,415 @@ public class ProductManager {
         manageProductMenu(scanner); // Recursive call to continue managing products
     }
 
-    // Add product menu
+    // Add Product Menu
     private void addProductMenu(Scanner scanner) {
-        Utils.displayHeader("Add User");
-        System.out.println(" Enter product details:");
-        System.out.print("  Enter product name: ");
+        int genChoice = 0;
+        int spChoice = 0;
+        String gencat = "";
+        String spcat = "";
+
+        while (true) {
+            Utils.displayHeader("Add Product");
+            Utils.printCentered(" Product Details");
+            Utils.productCat();
+            Utils.printLine(60);
+            System.out.print(" Please select the Product's General Category: ");
+
+            if (scanner.hasNextInt()) {
+                genChoice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                switch (genChoice) {
+                    case 1: 
+                        gencat = "Groceries"; 
+                        break;
+                    case 2: 
+                        gencat = "Home & Kitchen"; 
+                        break;
+                    case 3: 
+                        gencat = "Health & Beauty"; 
+                        break;
+                    case 4: 
+                        gencat = "Books & Stationery"; 
+                        break;
+                    case 5: 
+                        gencat = "Electronics"; 
+                        break;
+                    case 6: 
+                        gencat = "Others"; 
+                        break;
+                    default:
+                        Utils.displayMessage("Invalid input. Please select a number between 1 and 6.");
+                        continue;
+                }
+                break;
+            } else {
+                Utils.displayMessage("Invalid input. Please enter a number.");
+                scanner.nextLine();
+            }
+        }
+
+        if (!gencat.equals("Others")) {
+            while (true) {
+                Utils.displayHeader("Add Product");
+                Utils.printCentered(" Product Details");
+                displaySubcategories(gencat);
+                Utils.printLine(60);
+                System.out.println(" Product Category: " + gencat);
+                System.out.print(" Please select Sub Category: ");
+                if (scanner.hasNextInt()) {
+                    spChoice = scanner.nextInt();
+                    scanner.nextLine(); // Consume newline
+                    spcat = getSpecificCategory(gencat, spChoice);
+                    if (spcat != null) {
+                        break;
+                    } else {
+                        Utils.displayMessage("Invalid input. Please select a valid option.");
+                    }
+                } else {
+                    Utils.displayMessage("Invalid input. Please enter a number.");
+                    scanner.nextLine(); // Consume invalid input
+                }
+            }
+        } else {
+            Utils.displayHeader("Add Product");
+            Utils.printCentered(" Product Details");
+            displaySubcategories(gencat);
+            System.out.println(" Product Category: " + gencat);
+            System.out.print(" Please enter Sub Category: ");
+            spcat = scanner.nextLine();
+        }
+
+        Utils.displayHeader("Add Product");
+        Utils.printCentered(" Product Details");
+        System.out.println(" Product Category: " + gencat);
+        System.out.println(" " + gencat + " Category: " + spcat);
+        System.out.print(" Please enter Product Name: ");
         String name = scanner.nextLine();
 
-        System.out.print("  Enter product category: ");
-        String category = scanner.nextLine();
+        int stockLevel = 0;
+        while (true) {
+            Utils.displayHeader("Add Product");
+            Utils.printCentered(" Product Details");
+            System.out.println(" Product Category: " + gencat);
+            System.out.println(" " + gencat + " Category: " + spcat);
+            System.out.println(" Product Name: " + name);
+            System.out.print(" Please enter Stock Level: ");
+            if (scanner.hasNextInt()) {
+                stockLevel = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+                if (stockLevel >= 0) {
+                    break;
+                } else {
+                    Utils.displayMessage("Stock level cannot be negative. Please try again.");
+                }
+            } else {
+                Utils.displayMessage("Invalid input. Please enter a positive number.");
+                scanner.nextLine(); // Consume invalid input
+            }
+        }
 
-        System.out.print("  Enter stock level: ");
-        int stockLevel = scanner.nextInt();
+        String expirationDate = null;
+        while (true) {
+            Utils.displayHeader("Add Product");
+            Utils.printCentered(" Product Details");
+            System.out.println(" Product Category: " + gencat);
+            System.out.println(" " + gencat + " Category: " + spcat);
+            System.out.println(" Product Name: " + name);
+            System.out.println(" Stock Level: " + stockLevel);
+            System.out.print(" Enter Expiration Date (YYYY-MM-DD): ");
+            String expirationDateStr = scanner.nextLine().trim();
+            if (expirationDateStr.matches("\\d{4}-\\d{2}-\\d{2}")) {
+                expirationDate = expirationDateStr; // Valid date format
+                break;
+            } else {
+                System.out.println("Invalid date format. Please use YYYY-MM-DD.");
+            }
+        }
+        Utils.displayHeader("Add Product");
+        Utils.printCentered("Confirm Product Details");
+        System.out.println(" Product Category: " + gencat);
+        System.out.println(" " + gencat + " Category: " + spcat);
+        System.out.println(" Product Name: " + name);
+        System.out.println(" Stock Level: " + stockLevel);
+        System.out.println(" Expiration Date (YYYY-MM-DD): " + expirationDate);
+        Product newProduct = new Product(name, gencat, spcat, stockLevel, expirationDate);
 
-        System.out.print("  Enter expiration date (YYYY-MM-DD): ");
-        String expirationDateStr = scanner.next();
-        Date expirationDate = Date.valueOf(expirationDateStr);
+        while (true) {
+            Utils.printLine(60);
+            System.out.print(" Are you sure you want to add " + name + "? (Y/N): ");
+            String confirmation = scanner.nextLine().trim().toLowerCase();
 
-        Product newProduct = new Product(name, category, stockLevel, expirationDate.toLocalDate());
-        addProduct(newProduct);
+            if (confirmation.equals("y")) {
+                Utils.displayHeader("Add Product");
+                Utils.displayMessage("Product '" + name + "' added successfully.");
+                addProduct(newProduct);
+                break;
+            } else if (confirmation.equals("n")) {
+                Utils.displayHeader("Add Product");
+                Utils.displayMessage("Product addition canceled. Returning to menu...");
+                break;
+            } else {
+                Utils.displayMessage("Invalid input. Please enter 'Y' or 'N'.");
+            }
+        }
+    }
+    
+    // Method to handle specific options based on chosen category
+    private void displaySubcategories(String gencat) {
+        switch (gencat) {
+            case "Groceries":
+                Utils.grocery();
+                break;
+            case "Home & Kitchen":
+                Utils.hK();
+                break;
+            case "Health & Beauty":
+                Utils.hB();
+                break;
+            case "Books & Stationery":
+                Utils.bS();
+                break;
+            case "Electronics":
+                Utils.electonics();             
+                break;
+            case "Others":
+                break;
+            default:
+                Utils.displayMessage("No options available for this category.");
+                return;
+        }
     }
 
+    private String getSpecificCategory(String spcat, int spChoice) {
+        switch (spcat) {
+            case "Groceries":
+                switch (spChoice) {
+                    case 1:
+                        return "Fresh Produce";
+                    case 2:
+                        return "Dairy Products";
+                    case 3:
+                        return "Meat & Seafood";
+                    case 4:
+                        return "Dry Goods";
+                    case 5: 
+                        return "Snacks & Confectionery";
+                    case 6: 
+                        return "Beverages";
+                    case 7: 
+                        return "Canned & Packaged Foods";
+                    case 8: 
+                        return "Frozen Foods";
+                };
+            case "Home & Kitchen":
+                switch (spChoice) {
+                    case 1: 
+                        return "Furniture";
+                    case 2: 
+                        return "Cookware";
+                    case 3: 
+                        return "Tableware";
+                    case 4: 
+                        return "Storage Solutions";
+                    case 5: 
+                        return "Cleaning Supplies";
+                    case 6: 
+                        return "Home Decor";
+                    case 7:
+                        return "Lighting";
+                };
+            case "Health & Beauty":
+                switch (spChoice) {
+                    case 1: 
+                        return "Skincare";
+                    case 2:
+                        return "Makeup";
+                    case 3: 
+                        return "Hair Care";
+                    case 4: 
+                        return "Personal Hygiene";
+                    case 5: 
+                        return "Fitness Equipment";
+                    case 6: 
+                        return "Medical Supplies";
+                    case 7: 
+                        return "Supplements & Vitamins";
+                };
+            case "Books & Stationery":
+                switch (spChoice) {
+                    case 1:  
+                        return "Fiction & Non-Fiction Books";
+                    case 2:  
+                        return "Textbooks & Educational Material";
+                    case 3: 
+                        return "Notebooks & Journals";
+                    case 4:  
+                        return "Writing Instruments";
+                    case 5:  
+                        return "Art Supplies";
+                    case 6: 
+                        return "Calendars & Planners";
+                };
+            case "Electronics":
+                switch (spChoice) {
+                    case 1: 
+                        return "Smartphones";
+                    case 2: 
+                        return "Laptops and Computers";
+                    case 3:  
+                        return "Audio Devices";
+                    case 4:     
+                        return "Cameras & Photography Equipment";
+                    case 5: 
+                        return "Smart Home Devices";
+                    case 6:     
+                        return "Wearables";
+                    case 7:  
+                        return "Home Appliances";
+                };
+            case "Others":
+                return null;
+            default:
+                return null;
+        }
+    }
+    
+    
     // Update product menu
     private void updateProductMenu(Scanner scanner) {
-        System.out.println("\nEnter product name to update:");
-        String name = scanner.nextLine();
+        Utils.displayHeader("Update Product");
+        System.out.print(" Enter product name to update: ");
+        String oldName = scanner.nextLine().trim();
 
-        System.out.print("Enter new stock level: ");
-        int newStockLevel = scanner.nextInt();
+        if (oldName.isEmpty()) {
+            System.out.println("Product name cannot be empty.");
+            return;
+        }
+        Product product = findProductByName(oldName);
+        if (product == null) {
+            Utils.displayMessage("Product not found.");
+            return;
+        }
 
-        System.out.print("Enter new expiration date (YYYY-MM-DD): ");
-        String expirationDateStr = scanner.next();
-        Date newExpirationDate = Date.valueOf(expirationDateStr);
+        while (true) {
+            int choice = 0;
+            Utils.displayHeader("Update Product");
+            System.out.println(" What would you like to update?");
+            System.out.println("  1. Product Name");
+            System.out.println("  2. Stock Level");
+            System.out.println("  3. Cancel");
+            Utils.printLine(60);
+            System.out.print("Plese select an option: ");
 
-        updateProduct(name, newStockLevel, newExpirationDate);
+            if (scanner.hasNextInt()) {
+                choice = scanner.nextInt();
+                scanner.nextLine();
+                Utils.displayHeader("Update Product");
+                System.out.println(" Product Name: " + oldName);
+                switch (choice) {
+                    case 1: // Update product name
+                        System.out.print(" Enter new product name or leave blank: ");
+                        String newName = scanner.nextLine();
+                        if (newName.isEmpty()) {
+                            Utils.displayMessage("Product name retained.");
+                            newName = oldName;
+                        }
+                        System.out.println(" New Product Name: " + newName);
+                        updateProduct(oldName, newName, product.getStockLevel());
+                        System.out.println("Product name updated successfully.");
+                        return;
+                    case 2: // Update stock level
+                        int currentStockLevel = product.getStockLevel();
+                        System.out.println("Current Stock Level: " + currentStockLevel);
+                        System.out.print(" Enter stock adjustment: ");
+                        if (scanner.hasNextInt()) {
+                            int stockAdjustment = scanner.nextInt();
+                            scanner.nextLine(); // Consume newline
+                            int newStockLevel = currentStockLevel + stockAdjustment;
+                            if (newStockLevel < 0) {
+                                System.out.println("Stock level cannot be negative. Setting stock level to 0.");
+                                newStockLevel = 0; // Prevent negative stock level
+                            }
+                            System.out.println("Current Stock Level: " + currentStockLevel);
+                            System.out.println("Stock Adjustment: " + stockAdjustment);
+                            System.out.println("New Stock Level: " + newStockLevel);
+                    
+                            updateProduct(oldName, oldName, newStockLevel);
+                            System.out.println("Stock level updated successfully.");
+                            return;
+                        } else {
+                            System.out.println("Invalid input. Please enter a valid number.");
+                            scanner.nextLine(); // Consume invalid input
+                        }
+                        break;
+
+                    case 3: 
+                        System.out.println("Update canceled. Returning to menu...");
+                        return;
+ 
+                    default:
+                        System.out.println("Invalid choice. Please select a valid option.");
+                }
+            } else {
+                System.out.println("Invalid input. Please enter a number (1-3).");
+                scanner.nextLine(); // Consume invalid input
+            }
+        }
     }
-
+            
+                        
+                    
+                    
+                    
     // Delete product menu
     private void deleteProductMenu(Scanner scanner) {
-        System.out.println("\nEnter product name to delete:");
-        String name = scanner.nextLine();
-        deleteProduct(name);
+        Utils.displayHeader("Delete Product");
+        listProductsWID();
+        Utils.printLine(60);
+        System.out.print(" Enter product ID to delete: ");
+        int productId = -1;
+
+        if (scanner.hasNextInt()) {
+            productId = scanner.nextInt();
+            scanner.nextLine(); // Consume newline
+        } else {
+            System.out.println("Invalid input. Please enter a valid numeric ID.");
+            scanner.nextLine(); // Consume invalid input
+            return;
+        }
+    
+        // Check if the product ID exists in the database
+        if (!isProductIdValid(productId)) {
+            System.out.println("Product with ID " + productId + " not found in the database. Returning to menu...");
+            return;
+        }
+    
+        // Confirm deletion
+        System.out.print("Are you sure you want to delete the product with ID " + productId + "? (Y/N): ");
+        String confirmation = scanner.nextLine().trim().toLowerCase();
+    
+        if (confirmation.equals("y")) {
+            deleteProductById(productId);
+            System.out.println("Product with ID " + productId + " has been successfully deleted.");
+        } else if (confirmation.equals("n")) {
+            System.out.println("Product deletion canceled. Returning to menu...");
+        } else {
+            System.out.println("Invalid input. Please enter 'Y' for Yes or 'N' for No.");
+        }
     }
 
-    // // Search product menu
-    // private void searchProductMenu(Scanner scanner) {
-    //     System.out.println("\nEnter search term (product name or category):");
-    //     String query = scanner.nextLine();
-    //     searchProducts(query);
-    // }
-
-    // Adjust stock menu
-    private void adjustStockMenu(Scanner scanner) {
-        System.out.println("\nEnter product name to adjust stock:");
-        String name = scanner.nextLine();
-
-        System.out.print("Enter stock adjustment (positive or negative): ");
-        int adjustment = scanner.nextInt();
-
-        adjustProductStock(name, adjustment);
+    private boolean isProductIdValid(int productId) {
+        String query = "SELECT 1 FROM products WHERE ProductID = ?";
+        try (Connection connection = connectToDatabase();
+            PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setInt(1, productId);
+            ResultSet resultSet = statement.executeQuery();
+            return resultSet.next(); // If a record is found, the ID is valid
+        } catch (SQLException e) {
+            System.err.println("Error validating product ID: " + e.getMessage());
+            return false;
+        }
     }
+    
 }

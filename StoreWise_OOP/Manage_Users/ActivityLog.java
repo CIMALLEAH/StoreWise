@@ -36,6 +36,6 @@ public class ActivityLog {
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss");
         String formattedDate = dateFormat.format(new Date(timestamp));
         String formattedTime = timeFormat.format(new Date(timestamp));
-        return "User: " + username + ", Action: " + action + ", Date: " + formattedDate + ", Time: " + formattedTime;
+        return "User: " + username + ", Action: " + action + ", Date: " + formattedDate + "\n Time: " + formattedTime;
     }
 }

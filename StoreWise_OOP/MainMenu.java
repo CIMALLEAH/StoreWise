@@ -55,6 +55,9 @@ public class MainMenu {
         }
 
         if (choice == 1) {
+            Utils.displayHeader("Login");
+            Utils.displayMessage("Loading.....");
+
             boolean loginSuccess = false;
             while (!loginSuccess) {
                 Utils.displayHeader("Login");
@@ -73,14 +76,14 @@ public class MainMenu {
 
                     while (true) {
                         Utils.displayHeader("Login");
-                        System.out.print(" Do you want to try again? (Y/y or N/n): ");
+                        System.out.print(" Do you want to try again? (Y/N): ");
                         String retryChoice = "";
                         retryChoice = scanner.nextLine().trim().toLowerCase();
 
                         if (retryChoice.equals("n")) {
                             loginSuccess = true;
                             Utils.displayHeader("Login");
-                            Utils.displayMessage("Exiting login.....");
+                            Utils.displayMessage("Exiting.....");
                             break;
                         } else if (retryChoice.equals("y")) {
                             Utils.displayHeader("Login");
@@ -88,14 +91,16 @@ public class MainMenu {
                             break;
                         } else {
                             Utils.displayHeader("Login");
-                            Utils.displayMessage("Invalid input, please enter 'Y/y' or 'N/n'.");
+                            Utils.displayMessage("Invalid input, please enter 'Y' or 'N'.");
                         }
                     }
                 }
             }
         } else if (choice == 2) {
             Utils.displayHeader("Main Menu");
-            Utils.displayMessage("Exiting... Goodbye!");
+            Utils.displayMessage("Exiting StoreWise.....");
+            Utils.displayHeader("Main Menu");
+            Utils.displayMessage("Goodbye!");
             System.exit(0);
         }
     }

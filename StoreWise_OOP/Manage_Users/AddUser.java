@@ -15,13 +15,11 @@ public class AddUser {
 
         while (true) {
             Utils.displayHeader("Add User");
+            Utils.displayMessage("Loading.....");
 
-            Utils.printCentered("*- - - - - - - - - -*");
-            Utils.printCentered("|     User Roles    |");
-            Utils.printCentered("|- - - - - - - - - -|");
-            Utils.printCentered("|  1. Admin         |");
-            Utils.printCentered("|  2. Employee      |");
-            Utils.printCentered("*- - - - - - - - - -*");
+            Utils.displayHeader("Add User");
+            Utils.printCentered("New User Details");
+            Utils.role();
             Utils.printLine(60);
             System.out.print(" Please select Role of new user: ");
 
@@ -29,14 +27,11 @@ public class AddUser {
                 roleChoice = scanner.nextInt();
                 scanner.nextLine();
                 if (roleChoice == 1 || roleChoice == 2) {
-
                     break;
                 } else {
-                    Utils.displayHeader("Add User");
                     Utils.displayMessage("Invalid input, please select 1 or 2.");
                 }
             }  else {
-                Utils.displayHeader("Add User");
                 Utils.displayMessage("Invalid input, please enter a number.");
                 scanner.nextLine();
             }   
@@ -47,13 +42,18 @@ public class AddUser {
         String addUsername;
         while (true) {
             Utils.displayHeader("Add User");
+            Utils.printCentered("New User Details");
             System.out.println(" Role: " + role);
             System.out.print(" Enter username: ");
             addUsername = scanner.nextLine();
+
+            if (addUsername.length() < 4) {
+                Utils.displayMessage("Username must be at least 4 characters long.");
+                continue;
+            } 
             
             if (userManager.isUsernameTaken(addUsername)) {
-                Utils.printCentered("Username is already taken. Please choose another one.");
-                Utils.sleepFor(1500);
+                Utils.displayMessage("Username is already taken. Please choose another one.");
                 continue;
             } else {
                 break;
@@ -63,23 +63,29 @@ public class AddUser {
         String addPassword;
         while (true) {
             Utils.displayHeader("Add User");
+            Utils.printCentered("New User Details");
             System.out.println(" Role: " + role);
             System.out.println(" Username: " + addUsername);
             System.out.print(" Enter password: ");
             addPassword = scanner.nextLine();
             
             if (addPassword.length() < 8) {
-                Utils.printCentered("Password must be at least 8 characters long.");
-                Utils.sleepFor(1500);
+                Utils.displayMessage("Password must be at least 8 characters long.");
                 continue;
             } else {
+                Utils.displayHeader("Add User");
+                Utils.printCentered("New User Details");
+                System.out.println(" Role: " + role);
+                System.out.println(" Username: " + addUsername);
+                Utils.printCentered(" Enter password: " + addPassword);
+                Utils.sleepFor(1500);
                 break;
             }
         }
         
         while (true) {
             Utils.displayHeader("Add User");
-            System.out.print(" Are you sure you want to add this user? (Y/y or N/n): ");
+            System.out.print(" Are you sure about adding (" + addUsername + ") as a user? (Y/N): ");
             String confirmation = scanner.nextLine().trim().toLowerCase();
 
             if (confirmation.equalsIgnoreCase("y")) {
@@ -91,7 +97,7 @@ public class AddUser {
                 break;
             } else {
                 Utils.displayHeader("Add User");
-                Utils.displayMessage("Invalid input, please enter 'Y/y' or 'N/n'.");
+                Utils.displayMessage("Invalid input, please enter 'Y' or 'N'.");
             }
         }
     }

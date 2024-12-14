@@ -2,14 +2,17 @@ package StoreWise_OOP.Manage_Products;
 
 public abstract class StoreItem {
     private String name;
-    private String category;
+    private String gencat;
+    private String spcat;
     private int stockLevel;
-
+    
     // Constructor
-    public StoreItem(String name, String category, int stockLevel) {
+    public StoreItem(String name, String gencat, String spcat, int stockLevel) {
         this.name = name;
-        this.category = category;
+        this.gencat = gencat;
+        this.spcat = spcat;
         this.stockLevel = stockLevel;
+
     }
 
     // Getters and Setters
@@ -21,12 +24,20 @@ public abstract class StoreItem {
         this.name = name;
     }
 
-    public String getCategory() {
-        return category;
+    public String getGenCat() {
+        return gencat;
     }
 
-    public void setCategory(String category) {
-        this.category = category;
+    public void setGenCat(String gencat) {
+        this.gencat = gencat;
+    }
+
+    public String getSpCat() {
+        return spcat;
+    }
+
+    public void setSpCat(String spcat) {
+        this.spcat = spcat;
     }
 
     public int getStockLevel() {

@@ -2,14 +2,18 @@ package StoreWise_OOP.Manage_Equipments;
 
 import java.util.ArrayList;
 
+import StoreWise_OOP.Utils;
+
 public class Equipment {
+    private int id;
     private String name;
     private String category;
     private String status;
     private ArrayList<MaintenanceRecord> maintenanceHistory;
 
     // Constructor
-    public Equipment(String name, String category, String status) {
+    public Equipment(int id, String name, String category, String status) {
+        this.id = id;
         this.name = name;
         this.category = category;
         this.status = status;
@@ -19,6 +23,10 @@ public class Equipment {
     // Getters and Setters
     public String getName() {
         return name;
+    }
+
+    public int getId() {
+        return id;
     }
 
     public void setName(String name) {
@@ -50,9 +58,10 @@ public class Equipment {
     }
 
     public void displayDetails() {
-        System.out.println("Name: " + name);
-        System.out.println("Category: " + category);
-        System.out.println("Status: " + status);
-        System.out.println("Maintenance History: " + maintenanceHistory.size() + " record(s)");
+        System.out.println("  Name: " + name);
+        System.out.println("  Category: " + category);
+        System.out.println("  Status: " + status);
+        System.out.println("  Maintenance History: " + maintenanceHistory.size() + " record(s)");
+        Utils.printLine(id);
     }
 }
