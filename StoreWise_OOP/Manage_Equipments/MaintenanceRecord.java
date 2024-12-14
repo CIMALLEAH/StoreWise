@@ -5,9 +5,10 @@ import java.time.LocalDate;
 public class MaintenanceRecord {
     private LocalDate maintenanceDate;
     private String details;
+    private LocalDate nextMaintenanceDate;
 
     // Constructor
-    public MaintenanceRecord(LocalDate maintenanceDate, String details) {
+    public MaintenanceRecord(LocalDate maintenanceDate, String details, LocalDate nextMaintenanceDate) {
         this.maintenanceDate = maintenanceDate;
         this.details = details;
     }
@@ -27,6 +28,10 @@ public class MaintenanceRecord {
 
     public void setDetails(String details) {
         this.details = details;
+    }
+    
+    public LocalDate getNextMaintenanceDate() {
+        return nextMaintenanceDate;
     }
 
     @Override

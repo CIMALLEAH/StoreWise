@@ -9,11 +9,9 @@ import StoreWise_OOP.Manage_Products.ProductManager;
 import StoreWise_OOP.Manage_Users.UpdateUser;
 import StoreWise_OOP.Manage_Users.User;
 import StoreWise_OOP.Manage_Users.UserManager;
-import StoreWise_OOP.Reports.InventoryManager;
 
 public class AdminMenu {
     // Declare dependency instances at the top of the class
-    private static InventoryManager inventoryManager = new InventoryManager();
     private static EquipmentManager equipmentManager = new EquipmentManager();
     private static ProductManager productManager = new ProductManager();
     private static UserManager userManager = new UserManager();
@@ -29,8 +27,7 @@ public class AdminMenu {
             System.out.println("  2. Manage Users");
             System.out.println("  3. Manage Products");
             System.out.println("  4. Manage Equipment");
-            System.out.println("  5. Alerts & Notifications");
-            System.out.println("  6. Logout");
+            System.out.println("  5. Logout");
             Utils.printLine(60);
             System.out.print(" Please select an option: ");
             
@@ -79,12 +76,6 @@ public class AdminMenu {
                 equipmentManager.manageEquipmentMenu(scanner);
                 break;
             case 5:
-                Utils.displayHeader("Alerts & Notifications");
-                Utils.displayMessage("Viewing alerts & notifications...");
-
-                break;
-            case 6:
-                // Logout
                 Utils.displayHeader(currentUser.getRole() + " Menu");
                 Utils.displayMessage("Logged out successfully.");
                 

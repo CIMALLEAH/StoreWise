@@ -1,6 +1,5 @@
 package StoreWise_OOP.Manage_Products;
 
-import java.io.IOException;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -198,36 +197,40 @@ public class ProductManager {
         return null;
     }
 
-    private void listProductsWID() {
-        String query = "SELECT * FROM products";
+    // Method to display products with their IDs
+    public void listProductsWID() {
+        String query = "SELECT productID, productName, productGenCat, stockLevel, expirationDate FROM products";
         try (Connection connection = connectToDatabase();
-            PreparedStatement statement = connection.prepareStatement(query);
-            ResultSet resultSet = statement.executeQuery()) {
+            Statement statement = connection.createStatement();
+            ResultSet resultSet = statement.executeQuery(query)) {
 
-            if (!resultSet.next()) {
-                System.out.println("No products found.");
+            if (!resultSet.isBeforeFirst()) { // Check if the result set is empty
+                System.out.println("No products found in the database.");
                 return;
             }
 
-            System.out.println("Product ID | Product Name | Category | Stock Level | Expiration Date");
-            System.out.println("------------------------------------------------------------");
-
-            do {
-                int productId = resultSet.getInt("ProductID");
-                String productName = resultSet.getString("ProductName");
-                String category = resultSet.getString("Category");
-                int stockLevel = resultSet.getInt("StockLevel");
-                String expirationDate = resultSet.getString("ExpirationDate");
-
-                System.out.printf("%-10d | %-12s | %-10s | %-11d | %-15s\n", productId, productName, category, stockLevel, expirationDate);
-            } while (resultSet.next());
+        // Table Header
+            System.out.printf("%-4s %-12s %-15s %-7s %-10s%n", 
+                              "ID", "Name", "General Category", " Stock", "Expiration Date");
             Utils.printLine(60);
-            System.in.read();  // Wait for the user to press Enter
 
-        } catch (SQLException | IOException e) {
-            System.err.println("Error fetching product data: " + e.getMessage());
+        // Display rows
+            while (resultSet.next()) {
+                int productId = resultSet.getInt("productID");
+                String name = resultSet.getString("productName");
+                String category = resultSet.getString("productGenCat");
+                int stockLevel = resultSet.getInt("stockLevel");
+                String expirationDate = resultSet.getString("expirationDate");
+
+                System.out.printf("%-4d %-15s %-15s %-6d %-10s%n", 
+                                  productId, name, category, stockLevel, expirationDate);
+            }
+
+        } catch (SQLException e) {
+            System.err.println("Error retrieving products: " + e.getMessage());
         }
     }
+
 
     // Menu for managing products
     public void manageProductMenu(Scanner scanner) {
@@ -262,19 +265,34 @@ public class ProductManager {
 
         switch (choice) {
             case 1:  // Add product
+                Utils.displayHeader("Add Product");
+                Utils.displayMessage("Loading.....");
                 addProductMenu(scanner);
                 break;
             case 2:  // Update product
+                Utils.displayHeader("Update Product");
+                Utils.displayMessage("Loading.....");
                 updateProductMenu(scanner);
                 break;
             case 3:  // Delete product
+                Utils.displayHeader("Delete Product");
+                Utils.displayMessage("Loading.....");
                 deleteProductMenu(scanner);
                 break;
             case 4:  // View products
+                Utils.displayHeader("View Products");
+                Utils.displayMessage("Loading.....");
+                Utils.displayHeader("View Products");
+                Utils.printCentered("Products");
+                Utils.printLine(60);
                 listProductsWID();
+                Utils.printLine(60);
+                pauseUntilEnter(scanner);
                 break;
                 // searchProductMenu(scanner);
             case 5:  // Back to Admin Menu
+                Utils.displayHeader("Manage Products");
+                Utils.displayMessage("Exiting.....");
                 Utils.clearConsole();
                 return;
             default:
@@ -368,6 +386,11 @@ public class ProductManager {
         System.out.println(" " + gencat + " Category: " + spcat);
         System.out.print(" Please enter Product Name: ");
         String name = scanner.nextLine();
+        if (name.isEmpty()) {
+            System.out.println("Product name cannot be empty.");
+        } else if (!isProductNameUnique(name)) {
+            System.out.println("A product with this name already exists. Please choose a different name.");
+        }
 
         int stockLevel = 0;
         while (true) {
@@ -693,5 +716,27 @@ public class ProductManager {
             return false;
         }
     }
+
+    private boolean isProductNameUnique(String name) {
+        String query = "SELECT 1 FROM products WHERE ProductName = ?";
+        try (Connection connection = connectToDatabase();
+             PreparedStatement statement = connection.prepareStatement(query)) {
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+            return !resultSet.next(); // Returns true if no record is found
+        } catch (SQLException e) {
+            System.err.println("Error checking product name uniqueness: " + e.getMessage());
+            return false;
+        }
+    }
+    
+
+    public void pauseUntilEnter(Scanner scanner) {
+        System.out.print("\n Press Enter to continue...");
+        scanner.nextLine(); // Waits for the user to press Enter
+    }
+    
     
 }
+
+

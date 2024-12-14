@@ -102,9 +102,8 @@ public class EquipmentManager {
              ResultSet resultSet = statement.executeQuery()) {
     
             // Display header
-            Utils.displayHeader("View Equipments");
             Utils.printLine(60);
-            System.out.println(String.format("%-10s %-30s %-20s %-15s", "ID", "Name", "Category", "Status"));
+            System.out.println(String.format("%-4s %-15s %-15s %-15s", "ID", "Name", "Category", "Status"));
             Utils.printLine(60);
     
             // Loop through results and display
@@ -118,7 +117,7 @@ public class EquipmentManager {
                 equipmentList.add(equipment);
     
                 // Format each equipment as a row in the table
-                System.out.println(String.format("%-10d %-30s %-20s %-15s", equipmentId, equipmentName, equipmentCategory, equipmentStatus));
+                System.out.println(String.format("%-4d %-15s %-15s %-15s", equipmentId, equipmentName, equipmentCategory, equipmentStatus));
             }
         } catch (SQLException e) {
             handleSQLException(e);
@@ -127,26 +126,56 @@ public class EquipmentManager {
     }
 
     // Add maintenance record
-    public void addMaintenanceRecord(int equipmentId, MaintenanceRecord record) {
+    public void addMaintenanceRecord(int equipmentId, LocalDate maintenanceDate, String details, LocalDate nextMaintenanceDate) {
+
         if (!isEquipmentIdValid(equipmentId)) {
             System.out.println("Invalid equipment ID. Maintenance record not added.");
             return;
         }
-        String query = "INSERT INTO maintenance_records (equipmentID, maintenance_date, details) VALUES (?, ?, ?)";
+        String query = "INSERT INTO maintenance_records (equipmentID, maintenanceDate, details, nextMaintenanceDate) VALUES (?, ?, ?, ?)";
         try (Connection connection = connectToDatabase();
-             PreparedStatement statement = connection.prepareStatement(query)) {
-
+        PreparedStatement statement = connection.prepareStatement(query)) {
+        
             statement.setInt(1, equipmentId);
-            statement.setDate(2, Date.valueOf(record.getMaintenanceDate()));
-            statement.setString(3, record.getDetails());
+            statement.setDate(2, Date.valueOf(maintenanceDate));
+            statement.setString(3, details);
+            if (nextMaintenanceDate != null) {
+                statement.setDate(4, Date.valueOf(nextMaintenanceDate));
+            } else {
+                statement.setNull(4, Types.DATE);
+            }
             statement.executeUpdate();
-
             System.out.println("Maintenance record added successfully.");
         } catch (SQLException e) {
             handleSQLException(e);
         }
     }
     
+
+    public void viewUpcomingMaintenance() {
+        String query = "SELECT e.equipmentName, m.nextMaintenanceDate " +
+                       "FROM maintenance_records m " +
+                       "JOIN equipments e ON m.equipmentID = e.equipmentID " +
+                       "WHERE m.nextMaintenanceDate >= CURRENT_DATE";
+        try (Connection connection = connectToDatabase();
+             PreparedStatement statement = connection.prepareStatement(query);
+             ResultSet resultSet = statement.executeQuery()) {
+    
+            Utils.displayHeader("Upcoming Maintenance");
+            Utils.printLine(60);
+            System.out.println(String.format("%-20s %-15s", "Equipment", "Next Maintenance Date"));
+            Utils.printLine(60);
+    
+            while (resultSet.next()) {
+                String equipmentName = resultSet.getString("equipmentName");
+                LocalDate nextMaintenanceDate = resultSet.getDate("nextMaintenanceDate").toLocalDate();
+                System.out.println(String.format("%-20s %-15s", equipmentName, nextMaintenanceDate));
+            }
+        } catch (SQLException e) {
+            handleSQLException(e);
+        }
+    }
+
     // Helper method to handle SQLException
     private void handleSQLException(SQLException e) {
         System.err.println("SQLException occurred: " + e.getMessage());
@@ -297,14 +326,16 @@ public class EquipmentManager {
             System.out.println("  3. Delete Equipment");
             System.out.println("  4. View Equipments");
             System.out.println("  5. Add Maintenance Record");
-            System.out.println("  6. Back to Admin Menu");
+            System.out.println("  6. View Maintenance Records");
+            System.out.println("  7. View Upcoming Maintenance");
+            System.out.println("  8. Back to Admin Menu");
             Utils.printLine(60);
             System.out.print(" Select an option: ");
 
             if (scanner.hasNextInt()) {
                 choice = scanner.nextInt();
                 scanner.nextLine();  // Consume newline
-                if (choice >= 1 && choice <= 6) {
+                if (choice >= 1 && choice <= 8) {
                     switch (choice) {
                         case 1:
                             Equipment equipment = collectEquipmentDetails(scanner);
@@ -317,12 +348,25 @@ public class EquipmentManager {
                             deleteEquipmentMenu(scanner);
                             break;
                         case 4:
+                            Utils.displayHeader("View Equipments");
+                            Utils.displayMessage("Loading.....");
+                            Utils.displayHeader("View Equipments");
+                            Utils.printCentered("Equipments");
                             viewEquipments();
+                            pauseUntilEnter(scanner);
                             break;
                         case 5:
                             addMaintenanceRecordMenu(scanner);
                             break;
                         case 6:
+                            viewMaintenanceRecords();
+                            pauseUntilEnter(scanner);
+                            break;
+                        case 7:
+                            viewUpcomingMaintenance();
+                            pauseUntilEnter(scanner);
+                            break;
+                        case 8:
                             return; // Exit menu
                         default:
                             System.out.println("Invalid choice. Try again.");
@@ -343,7 +387,8 @@ public class EquipmentManager {
     private void updateEquipmentMenu(Scanner scanner) {
         Utils.displayHeader("Update Equipment");
         viewEquipments();  // Display equipment
-        System.out.print("Enter equipment ID to update: ");
+        Utils.printLine(60);
+        System.out.print(" Enter equipment ID to update: ");
         int equipmentId = getValidEquipmentId(scanner);  // Get valid equipment ID
         if (equipmentId == -1) return;  // If the ID is invalid, exit the method
 
@@ -353,51 +398,58 @@ public class EquipmentManager {
             return;
         }
         while (true) {
-            int choice = showEquipmentUpdateOptions(scanner, equipmentId);
-            if (choice == 1) {
-                updateEquipmentName(scanner, equipmentId, equipment);  // Update name
-                return;
-            } else if (choice == 2) {
-                updateEquipmentStatus(scanner, equipment);
-                return;
-            } else if (choice == 3) {
-                System.out.println("Update canceled. Returning to menu...");
-                return;
+            Utils.displayHeader("Update Equipment");
+            System.out.println(" What would you like to update?");
+            System.out.println("  1. Equipment Name");
+            System.out.println("  2. Equipment Status");
+            System.out.println("  3. Cancel");
+            Utils.printLine(60);
+            System.out.print("Please select an option: ");
+    
+            int choice = -1; // Default invalid value
+
+            if (scanner.hasNextInt()) {
+                choice = scanner.nextInt();
             } else {
-                System.out.println("Invalid choice. Please select a valid option.");
+                scanner.nextLine(); // Consume the invalid input if it's not an integer
+                System.out.println("Invalid input. Please enter a valid number.");
+            }
+    
+            switch (choice) {
+                case 1:
+                    updateEquipmentName(scanner, equipmentId, equipment);  // Update name
+                    break; // Exit the loop after the update
+                case 2:
+                    updateEquipmentStatus(scanner, equipment);  // Update status
+                    break; // Exit the loop after the update
+                case 3:
+                    System.out.println("Update canceled. Returning to menu...");
+                    break; // Exit the loop if canceled
+                default:
+                    System.out.println("Invalid choice. Please select a valid option.");
+                    break;
+                }   
             }
         }
-    }
 
-    // Show equipment update options
-    private int showEquipmentUpdateOptions(Scanner scanner, int equipmentID) {
-        Utils.displayHeader("Update Equipment");
-        System.out.println("What would you like to update?");
-        System.out.println("  1. Equipment Name");
-        System.out.println("  2. Equipment Status");
-        System.out.println("  3. Cancel");
-        Utils.printLine(60);
-        System.out.print("Please select an option: ");
-        return scanner.nextInt();
-    }
-
-    // Update equipment name
     private void updateEquipmentName(Scanner scanner, int equipmentID, Equipment equipment) {
         scanner.nextLine();  // Consume newline
-        System.out.print("Enter new equipment name or leave blank: ");
+        Utils.displayHeader("Update Equipment Name");
+        System.out.print(" Enter new equipment name: ");
         String newName = scanner.nextLine().trim();
         if (newName.isEmpty()) {
-            System.out.println("Equipment name retained.");
+            Utils.displayHeader("Update Equipment Name");
+            Utils.displayMessage("Equipment name retained.");
             return;
         }
         updateEquipmentNameInDatabase(equipmentID, newName);
-        System.out.println("Equipment name updated successfully.");
+        Utils.displayHeader("Update Equipment Name");
+        Utils.displayMessage("Equipment name updated successfully.");
     }
 
-    // Update equipment status
     private void updateEquipmentStatus(Scanner scanner, Equipment equipment) {
         System.out.println("Current Status: " + equipment.getStatus());
-        System.out.print("Enter new equipment status: ");
+        System.out.print(" Enter new equipment status: ");
         String newStatus = scanner.nextLine().trim();
         updateEquipment(equipment.getId(), newStatus);
         System.out.println("Equipment status updated successfully.");
@@ -430,7 +482,7 @@ public class EquipmentManager {
         Utils.displayHeader("Delete Equipment");
         viewEquipments();  // Display equipment
         Utils.printLine(60);
-        System.out.print("Enter equipment ID to delete: ");
+        System.out.print(" Enter equipment ID to delete: ");
         int equipmentId = getValidEquipmentId(scanner);
         if (equipmentId == -1) return;
 
@@ -463,8 +515,8 @@ public class EquipmentManager {
         Utils.displayHeader("Delete Equipment");
         viewEquipments();  // Display equipment
         Utils.printLine(60);
-        System.out.print("Equipment ID: " + equipmentId);
-        System.out.print("Are you sure you want to delete this equipment? (Y/N): ");
+        System.out.print(" Equipment ID: " + equipmentId);
+        System.out.print(" Delete this equipment? (Y/N): ");
         String confirmation = scanner.nextLine().trim().toLowerCase();
         return confirmation.equals("y");
     }
@@ -476,12 +528,12 @@ public class EquipmentManager {
         Utils.printLine(60);
         
         // Step 2: Get valid equipment ID
-        System.out.print("Enter equipment ID for maintenance: ");
+        System.out.print(" Enter equipment ID for maintenance: ");
         int equipmentId = getValidEquipmentId(scanner);
         if (equipmentId == -1) return;  // If the ID is invalid, return
     
         // Step 3: Get maintenance details
-        System.out.print("Enter maintenance date (YYYY-MM-DD): ");
+        System.out.print(" Enter maintenance date (YYYY-MM-DD): ");
         String dateInput = scanner.nextLine().trim();
         LocalDate maintenanceDate;
         try {
@@ -490,8 +542,21 @@ public class EquipmentManager {
             System.out.println("Invalid date format. Please try again.");
             return;
         }
+
+        System.out.print(" Enter next maintenance date (YYYY-MM-DD): ");
+        String nextDateInput = scanner.nextLine().trim();
+        LocalDate nextMaintenanceDate = null;
+        if (!nextDateInput.isEmpty()) {
+        try {
+            nextMaintenanceDate = LocalDate.parse(nextDateInput);
+        } catch (Exception e) {
+            System.out.println("Invalid date format for next maintenance. Please try again.");
+            return;
+        }
+    }
+
     
-        System.out.print("Enter maintenance details: ");
+        System.out.print(" Enter maintenance details: ");
         String details = scanner.nextLine().trim();
         
         // Step 4: Confirm maintenance record addition
@@ -501,19 +566,58 @@ public class EquipmentManager {
         System.out.println(" Maintenance Date: " + maintenanceDate);
         System.out.println(" Details: " + details);
         Utils.printLine(60);
-        System.out.print("Are you sure you want to add this maintenance record? (Y/N): ");
+        System.out.print("  Add this maintenance record? (Y/N): ");
         
         String confirmation = scanner.nextLine().trim().toLowerCase();
+        
         if (confirmation.equals("y")) {
-            // Step 5: Add maintenance record
-            MaintenanceRecord record = new MaintenanceRecord(maintenanceDate, details);
-            addMaintenanceRecord(equipmentId, record);
-            System.out.println("Maintenance record added successfully.");
+            Utils.displayHeader("Add Maintenance Record");
+            Utils.displayMessage("Maintenance record added successfully.");
+            addMaintenanceRecord(equipmentId, maintenanceDate, details, nextMaintenanceDate);
         } else if (confirmation.equals("n")) {
+            Utils.displayHeader("Add Maintenance Record");
             System.out.println("Maintenance record addition canceled. Returning to menu...");
         } else {
+            Utils.displayHeader("Add Maintenance Record");
             System.out.println("Invalid input. Returning to menu...");
         }
+    }
+
+    // View all maintenance records
+public void viewMaintenanceRecords() {
+    String query = "SELECT m.recordID, e.equipmentName, m.maintenanceDate, m.details, m.nextMaintenanceDate " +
+                   "FROM maintenance_records m " +
+                   "JOIN equipments e ON m.equipmentID = e.equipmentID";
+    try (Connection connection = connectToDatabase();
+         PreparedStatement statement = connection.prepareStatement(query);
+         ResultSet resultSet = statement.executeQuery()) {
+
+        Utils.displayHeader("Maintenance Records");
+        Utils.printLine(60);
+        System.out.println(String.format("%-3s %-10s %-10s %-27s %-10s", "ID", "Equipment", "Date", "Details", "Next Maintenance"));
+        Utils.printLine(60);
+
+        while (resultSet.next()) {
+            int recordID = resultSet.getInt("recordID");
+            String equipmentName = resultSet.getString("equipmentName");
+            LocalDate maintenanceDate = resultSet.getDate("maintenanceDate").toLocalDate();
+            String details = resultSet.getString("details");
+            LocalDate nextMaintenanceDate = resultSet.getDate("nextMaintenanceDate") != null 
+                                             ? resultSet.getDate("nextMaintenanceDate").toLocalDate() 
+                                             : null;
+
+            System.out.println(String.format("%-3d %-10s %-10s %-27s %-10s", 
+                recordID, equipmentName, maintenanceDate, details, 
+                nextMaintenanceDate != null ? nextMaintenanceDate : "N/A"));
+        }
+    } catch (SQLException e) {
+        handleSQLException(e);
+    }
+}
+
+    private void pauseUntilEnter(Scanner scanner) {
+        System.out.print("\n Press Enter to continue...");
+        scanner.nextLine(); // Waits for the user to press Enter
     }
     
 }
