@@ -19,6 +19,11 @@ Several classes in **StoreWise** inherit from common parent classes. For example
 ### 4. Abstraction🌟
 Abstract classes and interfaces are used to hide implementation details while exposing key functionalities. For instance, database interactions are abstracted into specific methods, allowing users to work with higher-level logic rather than focusing on low-level details.
 
+## 🌳SDG Integration: SDG 12 – Responsible Consumption and Production
+**StoreWise** supports **SDG 12: Responsible Consumption and Production**, by enabling store owners to manage their inventory efficiently and schedule regular maintenance for equipment. By tracking stock levels, expiration dates, and maintaining equipment in optimal condition, **StoreWise** helps reduce waste, extend the lifecycle of products and equipment, and promotes sustainable resource consumption in the retail industry.
+
+Through these practices, **StoreWise** contributes to reducing the overproduction of goods and minimizing the environmental impact of poorly managed store operations.
+
 ## 🎯Instructions to Run the Program
 
 ###  🌟Prerequisites:
