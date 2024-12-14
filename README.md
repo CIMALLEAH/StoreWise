@@ -1,4 +1,4 @@
-# 🌟StoreWise: Inventory and Maintenance Management System🌟
+# *StoreWise: Inventory and Maintenance Management System*🌟
 *by Michaella P. Balagtas*🌞
 
 ## ☀️Project Overview
