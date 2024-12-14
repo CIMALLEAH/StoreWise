@@ -102,7 +102,6 @@ public class EquipmentManager {
              ResultSet resultSet = statement.executeQuery()) {
     
             // Display header
-            Utils.printLine(60);
             System.out.println(String.format("%-4s %-15s %-15s %-15s", "ID", "Name", "Category", "Status"));
             Utils.printLine(60);
     
@@ -162,7 +161,6 @@ public class EquipmentManager {
              ResultSet resultSet = statement.executeQuery()) {
     
             Utils.displayHeader("Upcoming Maintenance");
-            Utils.printLine(60);
             System.out.println(String.format("%-20s %-15s", "Equipment", "Next Maintenance Date"));
             Utils.printLine(60);
     
@@ -171,6 +169,7 @@ public class EquipmentManager {
                 LocalDate nextMaintenanceDate = resultSet.getDate("nextMaintenanceDate").toLocalDate();
                 System.out.println(String.format("%-20s %-15s", equipmentName, nextMaintenanceDate));
             }
+            Utils.printLine(60);
         } catch (SQLException e) {
             handleSQLException(e);
         }
@@ -338,35 +337,49 @@ public class EquipmentManager {
                 if (choice >= 1 && choice <= 8) {
                     switch (choice) {
                         case 1:
+                            Utils.displayHeader("Add Equipments");
+                            Utils.displayMessage("Loading.....");
                             Equipment equipment = collectEquipmentDetails(scanner);
                             addEquipment(equipment);
                             break;
                         case 2:
+                            Utils.displayHeader("Update Equipments");
+                            Utils.displayMessage("Loading.....");
                             updateEquipmentMenu(scanner);
                             break;
                         case 3:
+                            Utils.displayHeader("Delete Equipments");
+                            Utils.displayMessage("Loading.....");
                             deleteEquipmentMenu(scanner);
                             break;
                         case 4:
                             Utils.displayHeader("View Equipments");
                             Utils.displayMessage("Loading.....");
                             Utils.displayHeader("View Equipments");
-                            Utils.printCentered("Equipments");
                             viewEquipments();
+                            Utils.printLine(60);
                             pauseUntilEnter(scanner);
                             break;
                         case 5:
+                            Utils.displayHeader("Add Maintenance Records");
+                            Utils.displayMessage("Loading.....");
                             addMaintenanceRecordMenu(scanner);
                             break;
                         case 6:
+                            Utils.displayHeader("View Maintenance Records");
+                            Utils.displayMessage("Loading.....");
                             viewMaintenanceRecords();
                             pauseUntilEnter(scanner);
                             break;
                         case 7:
+                            Utils.displayHeader("View Upcoming Maintenance");
+                            Utils.displayMessage("Loading.....");
                             viewUpcomingMaintenance();
                             pauseUntilEnter(scanner);
                             break;
                         case 8:
+                            Utils.displayHeader("Manage Equipments");
+                            Utils.displayMessage("Exiting.....");
                             return; // Exit menu
                         default:
                             System.out.println("Invalid choice. Try again.");
@@ -593,8 +606,7 @@ public void viewMaintenanceRecords() {
          ResultSet resultSet = statement.executeQuery()) {
 
         Utils.displayHeader("Maintenance Records");
-        Utils.printLine(60);
-        System.out.println(String.format("%-3s %-10s %-10s %-27s %-10s", "ID", "Equipment", "Date", "Details", "Next Maintenance"));
+        System.out.println(String.format("%-3s %-10s %-10s %-17s %-10s", "ID", "Equipment", "Date", "Details", "Next Maintenance"));
         Utils.printLine(60);
 
         while (resultSet.next()) {
@@ -606,16 +618,17 @@ public void viewMaintenanceRecords() {
                                              ? resultSet.getDate("nextMaintenanceDate").toLocalDate() 
                                              : null;
 
-            System.out.println(String.format("%-3d %-10s %-10s %-27s %-10s", 
+            System.out.println(String.format("%-3d %-10s %-10s %-17s %-10s", 
                 recordID, equipmentName, maintenanceDate, details, 
                 nextMaintenanceDate != null ? nextMaintenanceDate : "N/A"));
         }
+        Utils.printLine(60);
     } catch (SQLException e) {
         handleSQLException(e);
     }
 }
 
-    private void pauseUntilEnter(Scanner scanner) {
+    public void pauseUntilEnter(Scanner scanner) {
         System.out.print("\n Press Enter to continue...");
         scanner.nextLine(); // Waits for the user to press Enter
     }

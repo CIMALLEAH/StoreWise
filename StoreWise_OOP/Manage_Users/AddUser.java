@@ -77,7 +77,7 @@ public class AddUser {
                 Utils.printCentered("New User Details");
                 System.out.println(" Role: " + role);
                 System.out.println(" Username: " + addUsername);
-                Utils.printCentered(" Enter password: " + addPassword);
+                System.out.println(" Enter password: " + addPassword);
                 Utils.sleepFor(1500);
                 break;
             }
