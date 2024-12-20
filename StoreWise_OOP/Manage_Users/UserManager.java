@@ -198,7 +198,7 @@ public class UserManager {
                 } catch (SQLException e) {
                     System.err.println("Error deleting user from database: " + e.getMessage());
                 }
-                logActivity(username, "Deleted user.");
+                logActivity(username, "Deleted user");
                 Utils.displayHeader("Delete User");
                 Utils.displayMessage("User deleted successfully.");
                 return;
