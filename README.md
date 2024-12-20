@@ -51,7 +51,7 @@ Through these practices, **StoreWise** contributes to reducing the overproductio
      USE storewise_db;
      SOURCE resources/database.sql;
      ```
-   - This will create the required tables, such as `equipments`, `products`, and `maintenance_records`, in the `storewise_db` database.
+   - This will create the required tables, such as  `users`, `equipments`, `products`, and `maintenance_records`, in the `storewise_db` database.
 
 4. **Update the Database Connection Settings**:
    - In the project, navigate to the file responsible for database connection (e.g., `DatabaseUtils.java` or wherever the database connection is set up).
