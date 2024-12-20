@@ -15,10 +15,9 @@ public class UserManager {
     private static final String DB_PASSWORD = "MIKS";
     private static User currentUser;
 
-    private List<User> users; // List to store users
-    private List<ActivityLog> activityLogs; // List to store activity logs
+    private List<User> users; 
+    private List<ActivityLog> activityLogs; 
 
-    // Constructor
     public UserManager() {
         users = new ArrayList<>();
         activityLogs = new ArrayList<>();
