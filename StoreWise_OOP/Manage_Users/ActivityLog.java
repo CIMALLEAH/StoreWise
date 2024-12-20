@@ -8,14 +8,12 @@ public class ActivityLog {
     private String action;
     private long timestamp;
 
-    // Constructor
     public ActivityLog(String username, String action) {
         this.username = username;
         this.action = action;
-        this.timestamp = System.currentTimeMillis();  // Store timestamp of action
+        this.timestamp = System.currentTimeMillis(); 
     }
 
-    // Getters
     public String getUsername() {
         return username;
     }
@@ -27,8 +25,6 @@ public class ActivityLog {
     public long getTimestamp() {
         return timestamp;
     }
-
-    // Override toString for easier display
     
     @Override
         public String toString() {
