@@ -11,7 +11,6 @@ import StoreWise_OOP.Manage_Users.User;
 import StoreWise_OOP.Manage_Users.UserManager;
 
 public class AdminMenu {
-    // Declare dependency instances at the top of the class
     private static EquipmentManager equipmentManager = new EquipmentManager();
     private static ProductManager productManager = new ProductManager();
     private static UserManager userManager = new UserManager();
@@ -33,9 +32,9 @@ public class AdminMenu {
             
             if (scanner.hasNextInt()) {
                 choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline character
+                scanner.nextLine(); 
                 if (choice >= 1 && choice <= 6) {
-                    break; // Valid input, break out of the loop
+                    break; 
                 } else {
                     Utils.displayHeader(currentUser.getRole() + " Menu");
                     Utils.displayMessage("Invalid input, please enter a number between 1 and 8.");
@@ -43,7 +42,7 @@ public class AdminMenu {
             } else {
                 Utils.displayHeader(currentUser.getRole() + " Menu");
                 Utils.displayMessage("Invalid input, please enter a number.");
-                scanner.nextLine(); // Consume invalid input
+                scanner.nextLine(); 
             }
         }
 
@@ -55,21 +54,18 @@ public class AdminMenu {
                 updateUser.myAccountMenu(scanner);
                 break;
             case 2:
-                // Handle manage users
                 Utils.displayHeader("Manage Users");
                 Utils.displayMessage("Managing users...");
 
                 userManager.manageUsers(scanner);
                 break;
             case 3:
-                // Handle manage products
                 Utils.displayHeader("Manage Products");
                 Utils.displayMessage("Managing products...");
 
                 productManager.manageProductMenu(scanner);
                 break;
             case 4:
-                // Handle manage equipment
                 Utils.displayHeader("Manage Equipment");
                 Utils.displayMessage("Managing equipment...");
 
